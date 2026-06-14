@@ -1,54 +1,178 @@
-/*
-  Import getAllAppointments to fetch appointments from the backend
-  Import createPatientRow to generate a table row for each patient appointment
+import { getAllAppointments } from "./services/appointmentRecordService.js";
 
+const elements = {};
+let selectedDate = new Date().toISOString().slice(0, 10);
+let requestId = 0;
 
-  Get the table body where patient rows will be added
-  Initialize selectedDate with today's date in 'YYYY-MM-DD' format
-  Get the saved token from localStorage (used for authenticated API calls)
-  Initialize patientName to null (used for filtering by name)
+function setStatus(message = "", type = "info") {
+  elements.status.textContent = message;
+  elements.status.className = `status-message status-${type}`;
+}
 
+function formatDateTime(value) {
+  if (!value) return { date: "Not provided", time: "" };
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return { date: value, time: "" };
 
-  Add an 'input' event listener to the search bar
-  On each keystroke:
-    - Trim and check the input value
-    - If not empty, use it as the patientName for filtering
-    - Else, reset patientName to "null" (as expected by backend)
-    - Reload the appointments list with the updated filter
+  return {
+    date: new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric"
+    }).format(date),
+    time: new Intl.DateTimeFormat(undefined, {
+      hour: "numeric",
+      minute: "2-digit"
+    }).format(date)
+  };
+}
 
+function appointmentStatus(status) {
+  return Number(status) === 1
+    ? { label: "Completed", className: "status-completed" }
+    : { label: "Scheduled", className: "status-scheduled" };
+}
 
-  Add a click listener to the "Today" button
-  When clicked:
-    - Set selectedDate to today's date
-    - Update the date picker UI to match
-    - Reload the appointments for today
+function createActionLink(label, href, className = "table-action") {
+  const link = document.createElement("a");
+  link.className = className;
+  link.href = href;
+  link.textContent = label;
+  return link;
+}
 
+function createAppointmentRow(appointment) {
+  const row = document.createElement("tr");
+  const patient = appointment.patient || {};
+  const patientId = appointment.patientId ?? patient.id;
+  const patientName = appointment.patientName ?? patient.name ?? "Unknown patient";
+  const patientEmail = appointment.patientEmail ?? patient.email ?? "No email";
+  const patientPhone = appointment.patientPhone ?? patient.phone ?? "No phone";
+  const doctorId = appointment.doctorId ?? appointment.doctor?.id ?? "";
+  const appointmentId = appointment.id;
+  const dateTime = formatDateTime(appointment.appointmentTime);
+  const status = appointmentStatus(appointment.status);
 
-  Add a change event listener to the date picker
-  When the date changes:
-    - Update selectedDate with the new value
-    - Reload the appointments for that specific date
+  const patientCell = document.createElement("td");
+  const patientStrong = document.createElement("strong");
+  patientStrong.textContent = patientName;
+  const patientMeta = document.createElement("span");
+  patientMeta.className = "cell-meta";
+  patientMeta.textContent = `Patient #${patientId ?? "-"}`;
+  patientCell.append(patientStrong, patientMeta);
 
+  const contactCell = document.createElement("td");
+  contactCell.textContent = patientPhone;
+  const email = document.createElement("span");
+  email.className = "cell-meta";
+  email.textContent = patientEmail;
+  contactCell.appendChild(email);
 
-  Function: loadAppointments
-  Purpose: Fetch and display appointments based on selected date and optional patient name
+  const appointmentCell = document.createElement("td");
+  appointmentCell.textContent = dateTime.date;
+  const time = document.createElement("span");
+  time.className = "cell-meta";
+  time.textContent = dateTime.time;
+  appointmentCell.appendChild(time);
 
-  Step 1: Call getAllAppointments with selectedDate, patientName, and token
-  Step 2: Clear the table body content before rendering new rows
+  const statusCell = document.createElement("td");
+  const statusBadge = document.createElement("span");
+  statusBadge.className = `appointment-status ${status.className}`;
+  statusBadge.textContent = status.label;
+  statusCell.appendChild(statusBadge);
 
-  Step 3: If no appointments are returned:
-    - Display a message row: "No Appointments found for today."
+  const actionCell = document.createElement("td");
+  actionCell.className = "table-actions";
+  actionCell.append(
+    createActionLink(
+      "History",
+      `/pages/patientRecord.html?id=${encodeURIComponent(patientId)}&doctorId=${encodeURIComponent(doctorId)}`
+    ),
+    createActionLink(
+      Number(appointment.status) === 1 ? "View prescription" : "Prescribe",
+      `/pages/addPrescription.html?appointmentId=${encodeURIComponent(appointmentId)}` +
+      `&patientName=${encodeURIComponent(patientName)}` +
+      `${Number(appointment.status) === 1 ? "&mode=view" : ""}`,
+      "table-action table-action-primary"
+    )
+  );
 
-  Step 4: If appointments exist:
-    - Loop through each appointment and construct a 'patient' object with id, name, phone, and email
-    - Call createPatientRow to generate a table row for the appointment
-    - Append each row to the table body
+  row.append(patientCell, contactCell, appointmentCell, statusCell, actionCell);
+  return row;
+}
 
-  Step 5: Catch and handle any errors during fetch:
-    - Show a message row: "Error loading appointments. Try again later."
+function renderAppointments(appointments) {
+  elements.tableBody.replaceChildren();
+  elements.count.textContent = appointments.length;
 
+  if (!appointments.length) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 5;
+    cell.className = "empty-table";
+    cell.textContent = "No appointments match the selected date and patient name.";
+    row.appendChild(cell);
+    elements.tableBody.appendChild(row);
+    return;
+  }
 
-  When the page is fully loaded (DOMContentLoaded):
-    - Call renderContent() (assumes it sets up the UI layout)
-    - Call loadAppointments() to display today's appointments by default
-*/
+  appointments.forEach(appointment => {
+    elements.tableBody.appendChild(createAppointmentRow(appointment));
+  });
+}
+
+async function loadAppointments() {
+  const token = localStorage.getItem("token");
+  if (!token) {
+    setStatus("Your doctor session has expired.", "error");
+    return;
+  }
+
+  const currentRequest = ++requestId;
+  const patientName = elements.search.value.trim() || "null";
+  setStatus("Loading appointments...", "info");
+
+  try {
+    const data = await getAllAppointments(selectedDate, patientName, token);
+    if (currentRequest !== requestId) return;
+    const appointments = Array.isArray(data) ? data : data.appointments || [];
+    renderAppointments(appointments);
+    setStatus("");
+  } catch (error) {
+    if (currentRequest !== requestId) return;
+    renderAppointments([]);
+    setStatus(error.message, "error");
+  }
+}
+
+function debounce(callback, delay = 250) {
+  let timeout;
+  return () => {
+    clearTimeout(timeout);
+    timeout = setTimeout(callback, delay);
+  };
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  localStorage.setItem("userRole", "doctor");
+
+  elements.search = document.getElementById("searchBar");
+  elements.date = document.getElementById("datePicker");
+  elements.status = document.getElementById("doctorStatus");
+  elements.tableBody = document.getElementById("patientTableBody");
+  elements.count = document.getElementById("appointmentCount");
+
+  elements.date.value = selectedDate;
+  elements.search.addEventListener("input", debounce(loadAppointments));
+  elements.date.addEventListener("change", () => {
+    selectedDate = elements.date.value || new Date().toISOString().slice(0, 10);
+    loadAppointments();
+  });
+  document.getElementById("todayButton").addEventListener("click", () => {
+    selectedDate = new Date().toISOString().slice(0, 10);
+    elements.date.value = selectedDate;
+    loadAppointments();
+  });
+
+  loadAppointments();
+});

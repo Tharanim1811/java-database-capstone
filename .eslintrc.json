@@ -1,0 +1,25 @@
+{
+  "env": {
+    "browser": true,
+    "es2022": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "extends": "eslint:recommended",
+  "globals": {
+    "selectRole": "readonly",
+    "setRole": "readonly",
+    "getRole": "readonly",
+    "getToken": "readonly",
+    "setSession": "readonly",
+    "clearSession": "readonly",
+    "debounce": "readonly",
+    "openModal": "readonly",
+    "closeModal": "readonly"
+  },
+  "rules": {
+    "no-unused-vars": ["warn", { "argsIgnorePattern": "^_" }]
+  }
+}

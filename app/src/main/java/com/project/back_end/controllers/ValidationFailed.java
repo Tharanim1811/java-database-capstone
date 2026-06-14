@@ -16,13 +16,19 @@ public class ValidationFailed {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationException(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
-        
-        // Iterate through all the validation errors
+
         for (FieldError error : ex.getBindingResult().getFieldErrors()) {
             String errorMessage = error.getDefaultMessage();
             errors.put("message", "" + errorMessage);
         }
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleGeneralException(Exception ex) {
+        Map<String, String> errors = new HashMap<>();
+        errors.put("message", ex.getMessage() != null ? ex.getMessage() : "An unexpected error occurred");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errors);
     }
 }

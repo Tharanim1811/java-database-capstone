@@ -1,0 +1,32 @@
+name: Frontend CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint-frontend:
+    name: Lint HTML, CSS, and JavaScript
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install frontend lint dependencies
+        run: npm ci
+
+      - name: Lint HTML files
+        run: npm run lint:html
+
+      - name: Lint CSS files
+        run: npm run lint:css
+
+      - name: Lint JavaScript files
+        run: npm run lint:js

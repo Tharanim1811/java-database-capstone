@@ -1,94 +1,123 @@
-/*this is the style sheet for the adminDashboard. */
+.filter-grid {
+  display: grid;
+  grid-template-columns: minmax(240px, 1.6fr) repeat(2, minmax(170px, 0.8fr)) auto;
+  align-items: end;
+  gap: 14px;
+}
 
-/* 
-Global Reset (`*`)
+.filter-clear {
+  white-space: nowrap;
+}
 
-* Purpose: Ensure consistent layout across all browsers.
-* Properties:
+.doctor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
 
-  * `margin: 0` — removes default outer spacing from all elements.
-  * `padding: 0` — removes default inner spacing.
-  * `box-sizing: border-box` — ensures padding and borders are included within the total width/height of elements.
+.doctor-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(23, 49, 58, 0.06);
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
 
-Base HTML & Body (`html, body`)
+.doctor-card:hover {
+  border-color: #a9c8c3;
+  transform: translateY(-3px);
+  box-shadow: 0 14px 34px rgba(23, 49, 58, 0.11);
+}
 
-* Purpose: Establish a full-height layout and apply a standard font across the page.
-* Properties:
+.doctor-info {
+  padding: 22px;
+}
 
-  * `height: 100%` — allows containers to stretch to the full viewport height.
-  * `font-family: Arial, sans-serif` — applies a clean, readable sans-serif font.
+.doctor-info h3 {
+  margin: 10px 0 18px;
+  font-size: 1.25rem;
+}
 
-Main Layout Wrapper (`.wrapper`)
+.doctor-info p {
+  margin: 9px 0;
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
 
-* Purpose: Create a flexible, vertical layout that fills the entire screen.
-* Properties:
+.doctor-info p strong {
+  color: var(--ink);
+}
 
-  * `display: flex` — enables flexbox for layout control.
-  * `flex-direction: column` — stacks children vertically.
-  * `min-height: 100vh` — ensures the wrapper always covers full screen height.
+.specialty-badge {
+  display: inline-flex;
+  padding: 6px 9px;
+  border-radius: 999px;
+  color: var(--brand-dark);
+  background: #e7f5f2;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
 
-Section Heading (`h2`)
+.availability-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 0.86rem;
+}
 
-* Purpose: Style the headings prominently for section separation.
-* Properties:
+.slot-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
 
-  * `font-size: 32px` — makes the heading large and noticeable.
-  * `font-weight: bold` — emphasizes text.
-  * `margin-bottom: 50px` — creates space below the heading.
-  * `color: #003e3e` — uses a strong teal for visual anchoring.
+.time-slot {
+  padding: 5px 8px;
+  border: 1px solid #cce1dd;
+  border-radius: 7px;
+  color: var(--brand-dark);
+  background: var(--surface-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
 
-Main Content Section (`.main-content`)
+.card-actions {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  background: #fbfdfc;
+}
 
-* Purpose: Layout the main content with padding and a background image.
-* Properties:
+@media (max-width: 980px) {
+  .filter-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
-  * `flex-grow: 1` — lets the content fill the available vertical space.
-  * `padding: 40px` — adds internal spacing around content.
-  * `display: flex` and `flex-direction: column` — organizes content in a vertical stack.
-  * `text-align: center` — centers the text.
-  * `background-image: url("index.png")` — sets a full-screen dashboard background.
-  * `background-size: cover` — ensures the image covers the whole section.
-  * `background-position: center` — centers the image.
-  * `background-repeat: no-repeat` — avoids tiling the image.
-  * `background-attachment: fixed` — fixes the image while scrolling.
+  .field-group-wide {
+    grid-column: 1 / -1;
+  }
 
-Primary Button (`button`)
+  .doctor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
 
-* Purpose: Design prominent, interactive buttons for main actions.
+@media (max-width: 620px) {
+  .filter-grid,
+  .doctor-grid {
+    grid-template-columns: 1fr;
+  }
 
-* Properties:
-
-  * `background-color: #A62B1F` — sets a bold red color.
-  * `color: white` — makes text stand out.
-  * `border: none` — removes any outline/border.
-  * `border-radius: 12px` — creates rounded corners.
-  * `padding: 10px 20px` — gives space inside the button.
-  * `margin-top: 20px` — adds spacing above the button.
-  * `width: 200px` — ensures consistent button width.
-  * `cursor: pointer` — shows a hand icon on hover.
-  * `font-size: 16px` — makes the text readable.
-
-* On Hover:
-
-  * Retains the same red background to maintain branding.
-
-Admin Button (`.adminBtn`)
-
-* Purpose: Provide a secondary button style for admin-specific actions.
-
-* Properties:
-
-  * `background-color: #f4f4f4` — uses a light grey background.
-  * `color: #333` — uses dark text for contrast.
-  * `font-weight: bold` — emphasizes text.
-  * `width: 110px` — smaller, compact width.
-  * `padding: 10px 0` — vertical padding only.
-  * `border: none` — clean look.
-  * `cursor: pointer` — indicates it's clickable.
-
-* On Hover**:
-
-   Changes text color to `#A62B1F` for brand consistency while keeping the background same.
-
-
-*/
+  .field-group-wide {
+    grid-column: auto;
+  }
+}

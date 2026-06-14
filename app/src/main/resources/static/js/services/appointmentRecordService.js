@@ -5,12 +5,33 @@ const APPOINTMENT_API = `${API_BASE_URL}/appointments`;
 
 //This is for the doctor to get all the patient Appointments
 export async function getAllAppointments(date, patientName, token) {
-  const response = await fetch(`${APPOINTMENT_API}/${date}/${patientName}/${token}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch appointments");
-  }
+  try {
+    const response = await fetch(
+      `${APPOINTMENT_API}/${encodeURIComponent(date)}/` +
+      `${encodeURIComponent(patientName || "null")}/${encodeURIComponent(token)}`
+    );
+    const text = await response.text();
+    let data = {};
 
-  return await response.json();
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { message: text };
+      }
+    }
+
+    if (!response.ok) {
+      throw new Error(data.message || "Failed to fetch appointments.");
+    }
+
+    return data;
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error("The appointment service is unavailable. Please try again later.");
+    }
+    throw error;
+  }
 }
 
 export async function bookAppointment(appointment, token) {
